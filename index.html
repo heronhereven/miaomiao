@@ -1,0 +1,2525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="喵喵喝水">
+    <title>喵喵喝水 - Pixel Cat Water Reminder</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #FF6B9D;
+            --secondary: #C44569;
+            --accent: #FFA502;
+            --bg: #FFF5E4;
+            --cat-color: #FFD93D;
+            --window-bg: #87CEEB;
+            --carpet: #C23B22;
+            --plant: #6BCB77;
+            --text: #2C3E50;
+            --success: #6BCB77;
+            --warning: #FFA502;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .app-container {
+            max-width: 420px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 顶部导航 */
+        .top-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            background: white;
+            border-bottom: 3px solid #2C3E50;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px 20px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .nav-btn.active {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--primary);
+        }
+        
+        /* 页面容器 */
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 主页面 - 猫咪房间 */
+        .home-page {
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+            background: linear-gradient(to bottom, var(--bg) 0%, #FFE5B4 100%);
+            position: relative;
+        }
+        
+        /* 窗户 */
+        .window {
+            width: 100%;
+            height: 140px;
+            background: var(--window-bg);
+            border: 6px solid #8B4513;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(255,255,255,0.3);
+        }
+        
+        .window::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: #8B4513;
+            transform: translateY(-50%);
+        }
+        
+        .window::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 6px;
+            background: #8B4513;
+            transform: translateX(-50%);
+        }
+        
+        .clouds {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.7;
+            animation: float 20s infinite linear;
+        }
+        
+        .cloud:nth-child(1) {
+            width: 60px;
+            height: 20px;
+            top: 10px;
+            left: -60px;
+        }
+        
+        .cloud:nth-child(2) {
+            width: 80px;
+            height: 25px;
+            top: 30px;
+            left: -100px;
+            animation-delay: 7s;
+        }
+        
+        @keyframes float {
+            to { transform: translateX(500px); }
+        }
+        
+        /* 房间内容 */
+        .room-content {
+            margin-top: 30px;
+            position: relative;
+        }
+        
+        /* 绿植 */
+        .plant {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            width: 40px;
+            height: 60px;
+        }
+        
+        .plant-pot {
+            width: 40px;
+            height: 20px;
+            background: #8B4513;
+            border-radius: 0 0 8px 8px;
+            position: absolute;
+            bottom: 0;
+        }
+        
+        .plant-leaves {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .leaf {
+            width: 15px;
+            height: 25px;
+            background: var(--plant);
+            border-radius: 0 15px 15px 0;
+            position: absolute;
+            animation: sway 3s infinite ease-in-out;
+        }
+        
+        .leaf:nth-child(1) {
+            transform: rotate(-30deg);
+            left: -5px;
+        }
+        
+        .leaf:nth-child(2) {
+            transform: rotate(30deg);
+            right: -5px;
+        }
+        
+        .leaf:nth-child(3) {
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        @keyframes sway {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(5deg); }
+        }
+        
+        /* 猫窝 */
+        .cat-bed {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            width: 60px;
+            height: 40px;
+            background: var(--carpet);
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            box-shadow: inset 0 -5px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* 地毯 */
+        .carpet {
+            width: 80%;
+            height: 15px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--carpet),
+                var(--carpet) 10px,
+                #A02810 10px,
+                #A02810 20px
+            );
+            margin: 80px auto 0;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* 猫咪容器 */
+        .cat-container {
+            width: 200px;
+            height: 200px;
+            margin: 40px auto;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        /* 猫咪 */
+        .cat {
+            width: 120px;
+            height: 120px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+        
+        .cat.happy {
+            animation: bounce 0.6s ease;
+        }
+        
+        .cat.sad {
+            filter: grayscale(50%);
+            animation: shake 0.5s ease;
+        }
+        
+        .cat.hungry {
+            animation: shake 0.5s ease infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-50%, -70%); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-50%, -50%) rotate(-5deg); }
+            75% { transform: translate(-50%, -50%) rotate(5deg); }
+        }
+        
+        /* 猫咪吃东西动画 */
+        .cat.eating {
+            animation: eating 0.8s ease 3;
+        }
+        
+        @keyframes eating {
+            0%, 100% { transform: translate(-50%, -50%); }
+            25% { transform: translate(-50%, -45%); }
+            50% { transform: translate(-50%, -50%); }
+            75% { transform: translate(-50%, -45%); }
+        }
+        
+        /* 猫咪玩耍动画 */
+        .cat.playing {
+            animation: playing 1s ease;
+        }
+        
+        @keyframes playing {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-50%, -60%) rotate(-15deg); }
+            50% { transform: translate(-50%, -50%) rotate(15deg); }
+            75% { transform: translate(-50%, -60%) rotate(-10deg); }
+            100% { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+        
+        /* 食物/玩具掉落动画 */
+        .reward-item {
+            position: absolute;
+            font-size: 40px;
+            pointer-events: none;
+            animation: dropItem 1.5s ease-out forwards;
+            z-index: 10;
+        }
+        
+        @keyframes dropItem {
+            0% {
+                top: -50px;
+                opacity: 1;
+                transform: translateX(-50%) scale(0.5) rotate(0deg);
+            }
+            60% {
+                top: 50%;
+                transform: translateX(-50%) scale(1.2) rotate(180deg);
+            }
+            80% {
+                top: 55%;
+                transform: translateX(-50%) scale(0.9) rotate(360deg);
+            }
+            100% {
+                top: 50%;
+                opacity: 0;
+                transform: translateX(-50%) scale(0.5) rotate(360deg);
+            }
+        }
+        
+        /* 猫咪身体 - 像素风格 */
+        .cat-body {
+            width: 80px;
+            height: 60px;
+            background: var(--cat-color);
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 8px;
+            box-shadow: 
+                inset -10px 0 0 rgba(0,0,0,0.1),
+                0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* 猫咪头 */
+        .cat-head {
+            width: 70px;
+            height: 60px;
+            background: var(--cat-color);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50% 50% 40% 40%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* 猫耳朵 */
+        .cat-ear {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 25px solid var(--cat-color);
+            position: absolute;
+            top: -5px;
+        }
+        
+        .cat-ear.left {
+            left: 5px;
+            transform: rotate(-15deg);
+        }
+        
+        .cat-ear.right {
+            right: 5px;
+            transform: rotate(15deg);
+        }
+        
+        /* 猫咪眼睛 */
+        .cat-eyes {
+            display: flex;
+            gap: 20px;
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .cat-eye {
+            width: 8px;
+            height: 12px;
+            background: #2C3E50;
+            border-radius: 50%;
+            animation: blink 4s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 96%, 100% { height: 12px; }
+            98% { height: 2px; }
+        }
+        
+        /* 猫鼻子和嘴 */
+        .cat-nose {
+            width: 8px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .cat-mouth {
+            width: 20px;
+            height: 10px;
+            border: 2px solid #2C3E50;
+            border-top: none;
+            border-radius: 0 0 50% 50%;
+            position: absolute;
+            top: 43px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* 猫尾巴 */
+        .cat-tail {
+            width: 40px;
+            height: 15px;
+            background: var(--cat-color);
+            position: absolute;
+            bottom: 25px;
+            right: -35px;
+            border-radius: 50%;
+            transform-origin: left center;
+            animation: tailWag 2s infinite ease-in-out;
+        }
+        
+        @keyframes tailWag {
+            0%, 100% { transform: rotate(-20deg); }
+            50% { transform: rotate(20deg); }
+        }
+        
+        /* 猫爪子 */
+        .cat-paws {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+        }
+        
+        .cat-paw {
+            width: 15px;
+            height: 20px;
+            background: var(--cat-color);
+            border-radius: 40% 40% 50% 50%;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+        }
+        
+        /* 状态显示 */
+        .status-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 30px;
+            padding: 0 20px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .status-label {
+            font-family: 'Silkscreen', cursive;
+            font-size: 14px;
+            width: 60px;
+            color: var(--text);
+        }
+        
+        .status-bar-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-bar {
+            flex: 1;
+            height: 24px;
+            background: #E0E0E0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 3px solid var(--text);
+            position: relative;
+        }
+        
+        .status-value {
+            font-family: 'Silkscreen', cursive;
+            font-size: 14px;
+            color: var(--text);
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .status-fill {
+            height: 100%;
+            transition: width 0.5s ease, background 0.3s ease;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+        }
+        
+        .status-fill.hunger { background: var(--accent); }
+        .status-fill.happy { background: var(--primary); }
+        .status-fill.health { background: var(--success); }
+        
+        /* 喝水按钮 */
+        .drink-button {
+            width: 90%;
+            margin: 30px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Silkscreen', cursive;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .drink-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+        }
+        
+        .drink-button:active {
+            transform: translateY(0);
+        }
+        
+        .drink-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .drink-button:hover::before {
+            left: 100%;
+        }
+        
+        /* 奖励提示 */
+        .reward-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            z-index: 1000;
+            text-align: center;
+            border: 4px solid var(--primary);
+            animation: popupAppear 0.5s ease forwards;
+        }
+        
+        @keyframes popupAppear {
+            to {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        .reward-popup.hide {
+            animation: popupDisappear 0.3s ease forwards;
+        }
+        
+        @keyframes popupDisappear {
+            to {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        .reward-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            animation: rewardBounce 0.6s ease infinite;
+        }
+        
+        @keyframes rewardBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .reward-text {
+            font-family: 'Silkscreen', cursive;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        
+        .reward-desc {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 记录页面 */
+        .record-page {
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+        }
+        
+        /* 周统计 */
+        .week-stats {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .week-title {
+            font-family: 'Silkscreen', cursive;
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .week-days {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .day-item {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .day-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .day-check {
+            width: 100%;
+            height: 50px;
+            border: 3px solid #E0E0E0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .day-check.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        .day-check.today {
+            border-color: var(--primary);
+            border-width: 4px;
+        }
+        
+        /* 时间轴 */
+        .timeline-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .timeline-title {
+            font-family: 'Silkscreen', cursive;
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: 12px;
+            border: 2px solid #E0E0E0;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -33px;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            background: var(--primary);
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px var(--primary);
+        }
+        
+        .timeline-time {
+            font-family: 'Silkscreen', cursive;
+            font-size: 14px;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .timeline-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .timeline-icon {
+            font-size: 24px;
+        }
+        
+        .timeline-text {
+            flex: 1;
+        }
+        
+        .timeline-type {
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+        
+        .timeline-note {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .timeline-edit {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            transition: transform 0.2s;
+        }
+        
+        .timeline-edit:hover {
+            transform: scale(1.2);
+        }
+        
+        /* 添加记录按钮 */
+        .add-record-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+        
+        .add-record-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 12px 35px rgba(255, 107, 157, 0.5);
+        }
+        
+        /* 设置页面 */
+        .settings-page {
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+        }
+        
+        .settings-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .settings-title {
+            font-family: 'Silkscreen', cursive;
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-label {
+            font-size: 15px;
+            color: var(--text);
+        }
+        
+        .settings-input {
+            width: 120px;
+            padding: 8px 12px;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .settings-select {
+            padding: 8px 12px;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .settings-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .settings-select:hover {
+            border-color: var(--primary);
+        }
+        
+        .settings-value {
+            font-size: 16px;
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        /* 开关按钮 */
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #E0E0E0;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: var(--success);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+        
+        /* 水量计算卡片 */
+        .water-calc-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.3);
+        }
+        
+        .water-amount {
+            font-family: 'Silkscreen', cursive;
+            font-size: 48px;
+            margin: 15px 0;
+        }
+        
+        .water-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 触摸反馈 */
+        .touch-feedback {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            animation: ripple 0.6s ease-out;
+        }
+        
+        @keyframes ripple {
+            from {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            to {
+                width: 100px;
+                height: 100px;
+                opacity: 0;
+            }
+        }
+        
+        /* 响应式 */
+        @media (max-width: 420px) {
+            .app-container {
+                width: 100%;
+            }
+            
+            .week-days {
+                gap: 4px;
+            }
+            
+            .day-check {
+                height: 45px;
+            }
+        }
+        
+        /* 猫咪提问样式 */
+        .cat-question-popup {
+            padding: 30px 25px !important;
+        }
+        
+        .question-answers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .answer-btn {
+            padding: 12px 20px;
+            background: var(--bg);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .answer-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 157, 0.3);
+        }
+        
+        .answer-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* 睡眠遮罩 */
+        .sleep-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Silkscreen', cursive;
+            z-index: 20;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* 冷却提示 - 中间位置 */
+        .cooldown-tip-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 165, 2, 0.95);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Noto Sans SC', sans-serif;
+            box-shadow: 0 5px 20px rgba(255, 165, 2, 0.4);
+            z-index: 15;
+            animation: tipPulse 0.5s ease;
+            pointer-events: none;
+        }
+        
+        @keyframes tipPulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        /* 猫咪睡觉状态 */
+        .cat.sleeping {
+            filter: brightness(0.7);
+        }
+        
+        .cat.sleeping .cat-eye {
+            height: 2px !important;
+            animation: none;
+        }
+        
+        /* 编辑记录弹窗 */
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .edit-modal.show {
+            display: flex;
+        }
+        
+        .edit-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .edit-modal-title {
+            font-family: 'Silkscreen', cursive;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .edit-form-group {
+            margin-bottom: 15px;
+        }
+        
+        .edit-form-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        
+        .edit-form-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .edit-form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .edit-form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .edit-form-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .edit-form-btn.cancel {
+            background: #E0E0E0;
+            color: var(--text);
+        }
+        
+        .edit-form-btn.save {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .edit-form-btn.delete {
+            background: #FF6B6B;
+            color: white;
+        }
+        
+        .edit-form-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部导航 -->
+        <div class="top-nav">
+            <button class="nav-btn active" data-page="home">🏠</button>
+            <button class="nav-btn" data-page="record">📊</button>
+            <button class="nav-btn" data-page="settings">⚙️</button>
+        </div>
+        
+        <!-- 主页面 -->
+        <div class="page active" id="home-page">
+            <div class="home-page">
+                <!-- 窗户 -->
+                <div class="window">
+                    <div class="clouds">
+                        <div class="cloud"></div>
+                        <div class="cloud"></div>
+                    </div>
+                </div>
+                
+                <!-- 房间内容 -->
+                <div class="room-content">
+                    <!-- 绿植 -->
+                    <div class="plant">
+                        <div class="plant-leaves">
+                            <div class="leaf"></div>
+                            <div class="leaf"></div>
+                            <div class="leaf"></div>
+                        </div>
+                        <div class="plant-pot"></div>
+                    </div>
+                    
+                    <!-- 猫窝 -->
+                    <div class="cat-bed"></div>
+                    
+                    <!-- 地毯 -->
+                    <div class="carpet"></div>
+                </div>
+                
+                <!-- 猫咪 -->
+                <div class="cat-container" id="catContainer">
+                    <div class="cat" id="cat">
+                        <div class="cat-head">
+                            <div class="cat-ear left"></div>
+                            <div class="cat-ear right"></div>
+                            <div class="cat-eyes">
+                                <div class="cat-eye"></div>
+                                <div class="cat-eye"></div>
+                            </div>
+                            <div class="cat-nose"></div>
+                            <div class="cat-mouth"></div>
+                        </div>
+                        <div class="cat-body">
+                            <div class="cat-tail"></div>
+                        </div>
+                        <div class="cat-paws">
+                            <div class="cat-paw"></div>
+                            <div class="cat-paw"></div>
+                        </div>
+                    </div>
+                    <!-- 睡眠遮罩 -->
+                    <div class="sleep-overlay" id="sleepOverlay" style="display: none;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">😴</div>
+                        <div style="font-size: 16px;">猫咪睡着了...</div>
+                        <div style="font-size: 13px; margin-top: 5px; opacity: 0.8;">明早6点见~</div>
+                    </div>
+                </div>
+                
+                <!-- 冷却提示 - 移到中间 -->
+                <div id="cooldownTip" class="cooldown-tip-center" style="display: none;">
+                    ⚠️ 喝太快啦，慢慢来~
+                </div>
+                
+                <!-- 状态条 -->
+                <div class="status-bars">
+                    <div class="status-item">
+                        <div class="status-label">饥饿</div>
+                        <div class="status-bar-container">
+                            <div class="status-bar">
+                                <div class="status-fill hunger" id="hungerBar" style="width: 70%"></div>
+                            </div>
+                            <div class="status-value" id="hungerValue">70</div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">快乐</div>
+                        <div class="status-bar-container">
+                            <div class="status-bar">
+                                <div class="status-fill happy" id="happyBar" style="width: 80%"></div>
+                            </div>
+                            <div class="status-value" id="happyValue">80</div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">健康</div>
+                        <div class="status-bar-container">
+                            <div class="status-bar">
+                                <div class="status-fill health" id="healthBar" style="width: 90%"></div>
+                            </div>
+                            <div class="status-value" id="healthValue">90</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 进度显示 -->
+                <div style="text-align: center; margin: 20px 0; font-family: 'Silkscreen', cursive;">
+                    <div style="font-size: 16px; color: var(--text); margin-bottom: 8px;">
+                        今日进度
+                    </div>
+                    <div style="font-size: 32px; color: var(--primary);">
+                        <span id="todaySipsCount">0</span> / <span id="targetSipsCount">18</span> 次
+                    </div>
+                    <div style="font-size: 14px; color: #666; margin-top: 5px;">
+                        <span id="todayMlCount">0</span> / <span id="targetMlCount">1800</span> ml
+                    </div>
+                </div>
+                
+                <!-- 喝水按钮 -->
+                <button class="drink-button" id="drinkBtn">
+                    💧 喝一口水
+                </button>
+            </div>
+        </div>
+        
+        <!-- 记录页面 -->
+        <div class="page" id="record-page">
+            <div class="record-page">
+                <!-- 周统计 -->
+                <div class="week-stats">
+                    <div class="week-title">📅 本周完成情况</div>
+                    <div class="week-days">
+                        <div class="day-item">
+                            <div class="day-label">周一</div>
+                            <div class="day-check completed">✓</div>
+                        </div>
+                        <div class="day-item">
+                            <div class="day-label">周二</div>
+                            <div class="day-check completed">✓</div>
+                        </div>
+                        <div class="day-item">
+                            <div class="day-label">周三</div>
+                            <div class="day-check today completed">✓</div>
+                        </div>
+                        <div class="day-item">
+                            <div class="day-label">周四</div>
+                            <div class="day-check"></div>
+                        </div>
+                        <div class="day-item">
+                            <div class="day-label">周五</div>
+                            <div class="day-check"></div>
+                        </div>
+                        <div class="day-item">
+                            <div class="day-label">周六</div>
+                            <div class="day-check"></div>
+                        </div>
+                        <div class="day-item">
+                            <div class="day-label">周日</div>
+                            <div class="day-check"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 时间轴 -->
+                <div class="timeline-section">
+                    <div class="timeline-title">⏰ 今日饮水记录</div>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-time">08:30</div>
+                            <div class="timeline-content">
+                                <div class="timeline-icon">☀️</div>
+                                <div class="timeline-text">
+                                    <div class="timeline-type">晨起第一杯水</div>
+                                    <div class="timeline-note">温开水 · 250ml</div>
+                                </div>
+                                <button class="timeline-edit">✏️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-time">10:15</div>
+                            <div class="timeline-content">
+                                <div class="timeline-icon">💼</div>
+                                <div class="timeline-text">
+                                    <div class="timeline-type">工作间隙补水</div>
+                                    <div class="timeline-note">柠檬水 · 200ml</div>
+                                </div>
+                                <button class="timeline-edit">✏️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-time">14:20</div>
+                            <div class="timeline-content">
+                                <div class="timeline-icon">☕</div>
+                                <div class="timeline-text">
+                                    <div class="timeline-type">午后提神</div>
+                                    <div class="timeline-note">美式咖啡 · 300ml</div>
+                                </div>
+                                <button class="timeline-edit">✏️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-time">17:45</div>
+                            <div class="timeline-content">
+                                <div class="timeline-icon">🌸</div>
+                                <div class="timeline-text">
+                                    <div class="timeline-type">下午茶时光</div>
+                                    <div class="timeline-note">花茶 · 250ml</div>
+                                </div>
+                                <button class="timeline-edit">✏️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="timeline-time">21:00</div>
+                            <div class="timeline-content">
+                                <div class="timeline-icon">🌙</div>
+                                <div class="timeline-text">
+                                    <div class="timeline-type">睡前一杯</div>
+                                    <div class="timeline-note">热牛奶 · 200ml</div>
+                                </div>
+                                <button class="timeline-edit">✏️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 添加记录按钮 -->
+                <button class="add-record-btn" id="addRecordBtn">+</button>
+            </div>
+        </div>
+        
+        <!-- 编辑/添加记录弹窗 -->
+        <div class="edit-modal" id="editModal">
+            <div class="edit-modal-content">
+                <div class="edit-modal-title" id="modalTitle">添加记录</div>
+                <form id="editForm">
+                    <div class="edit-form-group">
+                        <label class="edit-form-label">时间</label>
+                        <input type="time" class="edit-form-input" id="editTime" required>
+                    </div>
+                    <div class="edit-form-group">
+                        <label class="edit-form-label">类型</label>
+                        <input type="text" class="edit-form-input" id="editType" placeholder="例如：晨起第一杯水" required>
+                    </div>
+                    <div class="edit-form-group">
+                        <label class="edit-form-label">内容</label>
+                        <input type="text" class="edit-form-input" id="editContent" placeholder="例如：温开水 · 250ml" required>
+                    </div>
+                    <div class="edit-form-group">
+                        <label class="edit-form-label">图标</label>
+                        <select class="edit-form-input" id="editIcon">
+                            <option value="☀️">☀️ 早晨</option>
+                            <option value="💼">💼 工作</option>
+                            <option value="☕">☕ 咖啡/茶</option>
+                            <option value="🌸">🌸 花茶</option>
+                            <option value="🌙">🌙 晚上</option>
+                            <option value="💧">💧 纯水</option>
+                            <option value="🥤">🥤 饮料</option>
+                        </select>
+                    </div>
+                    <div class="edit-form-buttons">
+                        <button type="button" class="edit-form-btn cancel" id="cancelBtn">取消</button>
+                        <button type="button" class="edit-form-btn delete" id="deleteBtn" style="display: none;">删除</button>
+                        <button type="submit" class="edit-form-btn save">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 设置页面 -->
+        <div class="page" id="settings-page">
+            <div class="settings-page">
+                <!-- 基本信息 -->
+                <div class="settings-section">
+                    <div class="settings-title">👤 基本信息</div>
+                    <div class="settings-item">
+                        <div class="settings-label">猫咪名字</div>
+                        <input type="text" class="settings-input" value="小喵" id="catName">
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">身高 (cm)</div>
+                        <input type="number" class="settings-input" value="170" id="userHeight">
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">体重 (kg)</div>
+                        <input type="number" class="settings-input" value="60" id="userWeight">
+                    </div>
+                </div>
+                
+                <!-- 每日目标 -->
+                <div class="settings-section">
+                    <div class="settings-title">🎯 每日目标</div>
+                    <div class="water-calc-card">
+                        <div class="water-label">建议每日饮水量</div>
+                        <div class="water-amount" id="targetWater">2000</div>
+                        <div class="water-label">毫升 (ml)</div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 13px; color: #666; text-align: center;">
+                        💡 根据体重计算：30-35ml/kg
+                    </div>
+                </div>
+                
+                <!-- 喝水习惯 -->
+                <div class="settings-section">
+                    <div class="settings-title">💧 喝水习惯</div>
+                    <div class="settings-item">
+                        <div class="settings-label">每次喝水量</div>
+                        <select class="settings-select" id="sipsSize">
+                            <option value="75">小口（75ml）</option>
+                            <option value="100" selected>正常（100ml）</option>
+                            <option value="150">大口（150ml）</option>
+                        </select>
+                    </div>
+                    <div class="settings-item" style="border: none; padding-top: 5px;">
+                        <div style="font-size: 13px; color: #666; line-height: 1.5;">
+                            💡 小口：约3口水 | 正常：约4口水 | 大口：约6口水
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 提醒设置 -->
+                <div class="settings-section">
+                    <div class="settings-title">🔔 提醒设置</div>
+                    <div class="settings-item">
+                        <div class="settings-label">开启提醒</div>
+                        <div class="toggle-switch active" id="notificationToggle"></div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">提醒间隔</div>
+                        <div class="settings-value">60 分钟</div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">提醒音效</div>
+                        <div class="toggle-switch active" id="soundToggle"></div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">背景音乐</div>
+                        <div class="toggle-switch" id="musicToggle"></div>
+                    </div>
+                </div>
+                
+                <!-- 其他设置 -->
+                <div class="settings-section">
+                    <div class="settings-title">🎨 其他设置</div>
+                    <div class="settings-item">
+                        <div class="settings-label">深色模式</div>
+                        <div class="toggle-switch" id="darkModeToggle"></div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">动画效果</div>
+                        <div class="toggle-switch active" id="animationToggle"></div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">版本号</div>
+                        <div class="settings-value">v1.0.0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 通知功能
+        let notificationPermission = 'default';
+        
+        // 请求通知权限
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                notificationPermission = await Notification.requestPermission();
+                console.log('通知权限:', notificationPermission);
+                
+                if (notificationPermission === 'granted') {
+                    console.log('✅ 通知权限已获取');
+                } else {
+                    console.log('❌ 用户拒绝了通知权限');
+                }
+            } else {
+                console.log('❌ 浏览器不支持通知');
+            }
+        }
+        
+        // 发送通知
+        function sendNotification(title, body, icon = '💧') {
+            if (notificationPermission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    icon: icon,
+                    badge: '🐱',
+                    tag: 'water-reminder',
+                    requireInteraction: false,
+                    silent: false
+                });
+            }
+        }
+        
+        // 设置定时提醒
+        let reminderInterval = null;
+        
+        function startReminder(intervalMinutes = 60) {
+            // 清除旧的定时器
+            if (reminderInterval) {
+                clearInterval(reminderInterval);
+            }
+            
+            // 设置新的定时器
+            reminderInterval = setInterval(() => {
+                // 只在白天提醒（6:00-22:00）
+                const hour = new Date().getHours();
+                if (hour >= 6 && hour < 22) {
+                    const messages = [
+                        '该喝水啦喵~',
+                        '记得补充水分哦',
+                        '喵~ 休息一下喝点水吧',
+                        '好久没喝水了呢',
+                        '来喝一口水吧~'
+                    ];
+                    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                    sendNotification('🐱 喵喵提醒', randomMessage);
+                }
+            }, intervalMinutes * 60 * 1000);
+            
+            console.log(`⏰ 提醒已开启：每${intervalMinutes}分钟提醒一次`);
+        }
+        
+        function stopReminder() {
+            if (reminderInterval) {
+                clearInterval(reminderInterval);
+                reminderInterval = null;
+                console.log('⏰ 提醒已关闭');
+            }
+        }
+        
+        // 状态管理
+        const appState = {
+            hunger: 70,
+            happy: 80,
+            health: 90,
+            lastDrinkTime: Date.now(),
+            lastDecayTime: Date.now(), // 上次数值衰减的时间
+            catName: '小喵',
+            drinkCount: 0,
+            todaySips: 0, // 今日已喝次数
+            targetSips: 18, // 目标次数（默认100ml/次）
+            mlPerSip: 100, // 每次的毫升数（可选75/100/150）
+            recentDrinks: [], // 最近的喝水时间记录
+            cooldownMultiplier: 1.0, // 冷却倍数
+            goalCompleted: false, // 今日目标是否完成
+            isSleeping: false, // 是否在睡觉
+            waterRecords: [ // 今日饮水记录
+                { id: 1, time: '08:30', type: '晨起第一杯水', content: '温开水 · 250ml', icon: '☀️' },
+                { id: 2, time: '10:15', type: '工作间隙补水', content: '柠檬水 · 200ml', icon: '💼' },
+                { id: 3, time: '14:20', type: '午后提神', content: '美式咖啡 · 300ml', icon: '☕' },
+                { id: 4, time: '17:45', type: '下午茶时光', content: '花茶 · 250ml', icon: '🌸' },
+                { id: 5, time: '21:00', type: '睡前一杯', content: '热牛奶 · 200ml', icon: '🌙' }
+            ],
+            currentEditId: null, // 当前编辑的记录ID
+            settings: {
+                height: 170,
+                weight: 60,
+                sipsSize: 100, // 每次喝水量
+                notifications: true,
+                sound: true,
+                music: false,
+                darkMode: false,
+                animation: true
+            }
+        };
+        
+        // 猫咪提问库（根据时间和情境）
+        const catQuestions = {
+            morning: [ // 早上 6:00-11:00
+                { q: "昨晚睡得好吗喵~？", a: ["睡得超好", "还行吧", "有点失眠"] },
+                { q: "今天吃早餐了吗？", a: ["吃了", "还没吃", "不想吃"] },
+                { q: "起床的时候有伸懒腰吗喵？", a: ["有啊", "忘了", "还没起来呢"] },
+                { q: "今天天气看起来怎么样？", a: ["很好", "一般般", "不太好"] }
+            ],
+            noon: [ // 中午 11:00-14:00
+                { q: "午饭吃什么好吃的了吗？", a: ["很好吃", "一般般", "还没吃"] },
+                { q: "有没有午休一下？", a: ["睡了", "没时间", "不想睡"] },
+                { q: "工作累不累呀？", a: ["有点累", "还好", "不累"] }
+            ],
+            afternoon: [ // 下午 14:00-18:00
+                { q: "下午困不困呀喵？", a: ["有点困", "还好", "很精神"] },
+                { q: "今天工作/学习顺利吗？", a: ["很顺利", "还行", "有点难"] },
+                { q: "需要我陪你吗喵~？", a: ["需要", "不用", "等一下"] },
+                { q: "想不想出去走走？", a: ["想", "不想", "等会儿"] }
+            ],
+            evening: [ // 晚上 18:00-22:00
+                { q: "今天累不累呀？", a: ["好累", "还好", "不累"] },
+                { q: "晚饭好吃吗？", a: ["很好吃", "一般", "还没吃"] },
+                { q: "明天有什么计划吗？", a: ["有", "没有", "不知道"] },
+                { q: "准备什么时候睡觉？", a: ["早点睡", "再玩会", "不知道"] }
+            ],
+            night: [ // 深夜 22:00-6:00
+                { q: "怎么还不睡觉喵~？", a: ["马上睡", "睡不着", "还有事"] },
+                { q: "要我陪你一起睡吗？", a: ["要", "不用", "好呀"] },
+                { q: "明天要早起吗？", a: ["要", "不用", "不知道"] }
+            ],
+            weather: {
+                rainy: [
+                    { q: "外面在下雨诶，有带伞吗？", a: ["带了", "没带", "在家里"] },
+                    { q: "下雨天喝热水会更舒服哦~", a: ["嗯嗯", "我喝的凉的", "好的"] }
+                ],
+                sunny: [
+                    { q: "今天天气真好呀！", a: ["是啊", "还行吧", "有点热"] }
+                ]
+            },
+            general: [ // 通用问题
+                { q: "这水是温的还是凉的呀？", a: ["凉的", "温的", "热的"] },
+                { q: "杯子是什么颜色的？", a: ["白色", "透明", "其他颜色"] },
+                { q: "喝完感觉怎么样？", a: ["很舒服", "还好", "有点渴"] },
+                { q: "加了什么吗？", a: ["什么都没加", "加了柠檬", "加了其他"] },
+                { q: "你的杯子大概多大呀？", a: ["很大", "中等", "小小的"] },
+                { q: "现在心情怎么样喵~？", a: ["很好", "一般", "有点累"] }
+            ]
+        };
+        
+        // 存储用户回答历史
+        const conversationHistory = [];
+        
+        // 猫咪的温柔提醒（偶尔幽默）
+        const gentleReminders = [
+            "水好像没喝到喵~",
+            "别着急，慢慢来喵",
+            "休息一下再喝吧",
+            "是在运动吗...",
+            "慢一点会更舒服哦",
+            "喵~ 你该不会在刷任务吧",
+            "喝水要慢慢喝才健康呢",
+            "到底有没有在喝啦",
+            "嗯... 感觉你有点心急了",
+            "猫猫怀疑中..."
+        ];
+        
+        // 页面切换
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const pages = document.querySelectorAll('.page');
+        
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetPage = btn.dataset.page;
+                
+                navBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                pages.forEach(p => p.classList.remove('active'));
+                document.getElementById(`${targetPage}-page`).classList.add('active');
+            });
+        });
+        
+        // 猫咪交互
+        const cat = document.getElementById('cat');
+        const catContainer = document.getElementById('catContainer');
+        let isPressing = false;
+        let pressTimer = null;
+        
+        catContainer.addEventListener('mousedown', startPress);
+        catContainer.addEventListener('touchstart', startPress);
+        catContainer.addEventListener('mouseup', endPress);
+        catContainer.addEventListener('touchend', endPress);
+        catContainer.addEventListener('mouseleave', endPress);
+        
+        function startPress(e) {
+            isPressing = true;
+            pressTimer = setTimeout(() => {
+                if (isPressing) {
+                    // 长按翻肚皮
+                    cat.style.transform = 'translate(-50%, -50%) rotate(180deg)';
+                    cat.classList.add('happy');
+                    appState.happy = Math.min(100, appState.happy + 5);
+                    updateStatusBars();
+                    
+                    setTimeout(() => {
+                        cat.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+                    }, 2000);
+                }
+            }, 800);
+            
+            // 触摸反馈
+            createRipple(e);
+        }
+        
+        function endPress() {
+            isPressing = false;
+            clearTimeout(pressTimer);
+        }
+        
+        function createRipple(e) {
+            const ripple = document.createElement('div');
+            ripple.className = 'touch-feedback';
+            const rect = catContainer.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            catContainer.appendChild(ripple);
+            
+            setTimeout(() => ripple.remove(), 600);
+        }
+        
+        // 喝水功能
+        const drinkBtn = document.getElementById('drinkBtn');
+        const hungerBar = document.getElementById('hungerBar');
+        const happyBar = document.getElementById('happyBar');
+        const healthBar = document.getElementById('healthBar');
+        const hungerValue = document.getElementById('hungerValue');
+        const happyValue = document.getElementById('happyValue');
+        const healthValue = document.getElementById('healthValue');
+        const cooldownTip = document.getElementById('cooldownTip');
+        const sleepOverlay = document.getElementById('sleepOverlay');
+        const todaySipsCount = document.getElementById('todaySipsCount');
+        const targetSipsCount = document.getElementById('targetSipsCount');
+        const todayMlCount = document.getElementById('todayMlCount');
+        const targetMlCount = document.getElementById('targetMlCount');
+        
+        drinkBtn.addEventListener('click', () => {
+            // 检查是否在睡觉
+            if (appState.isSleeping) {
+                return;
+            }
+            drinkWater();
+        });
+        
+        // 检查睡眠状态
+        function checkSleepStatus() {
+            const hour = new Date().getHours();
+            const shouldSleep = hour >= 22 || hour < 6;
+            
+            if (shouldSleep && !appState.isSleeping) {
+                // 进入睡眠
+                appState.isSleeping = true;
+                cat.classList.add('sleeping');
+                sleepOverlay.style.display = 'flex';
+                drinkBtn.disabled = true;
+                drinkBtn.style.opacity = '0.5';
+                drinkBtn.style.cursor = 'not-allowed';
+            } else if (!shouldSleep && appState.isSleeping) {
+                // 醒来，重置每日任务
+                appState.isSleeping = false;
+                cat.classList.remove('sleeping');
+                sleepOverlay.style.display = 'none';
+                drinkBtn.disabled = false;
+                drinkBtn.style.opacity = '1';
+                drinkBtn.style.cursor = 'pointer';
+                
+                // 重置每日数据
+                appState.todaySips = 0;
+                appState.goalCompleted = false;
+                drinkBtn.innerHTML = '💧 喝一口水';
+                drinkBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                updateProgress();
+            }
+        }
+        
+        function calculateCooldownMultiplier() {
+            const now = Date.now();
+            const recentWindow = 2 * 60 * 1000; // 2分钟窗口
+            
+            // 清理2分钟前的记录
+            appState.recentDrinks = appState.recentDrinks.filter(time => now - time < recentWindow);
+            
+            // 根据最近喝水次数计算冷却倍数
+            const recentCount = appState.recentDrinks.length;
+            
+            // 前3口是正常的，不触发惩罚
+            if (recentCount <= 3) {
+                appState.cooldownMultiplier = 1.0;
+                cooldownTip.style.display = 'none';
+            } else if (recentCount === 4) {
+                // 第4口开始轻微降低
+                appState.cooldownMultiplier = 0.7;
+                showCooldownTip('慢一点会更好哦~');
+            } else if (recentCount === 5) {
+                // 第5口适度降低
+                appState.cooldownMultiplier = 0.5;
+                showCooldownTip('喝太快啦，休息一下~');
+            } else if (recentCount >= 6) {
+                // 第6口及以上严重降低
+                appState.cooldownMultiplier = 0.2;
+                const reminder = gentleReminders[Math.floor(Math.random() * gentleReminders.length)];
+                showCooldownTip(reminder);
+            }
+            
+            return appState.cooldownMultiplier;
+        }
+        
+        function showCooldownTip(message) {
+            cooldownTip.textContent = message;
+            cooldownTip.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                cooldownTip.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 定期检查冷却恢复（每10秒检查一次）
+        setInterval(() => {
+            const now = Date.now();
+            const recentWindow = 2 * 60 * 1000; // 2分钟窗口
+            appState.recentDrinks = appState.recentDrinks.filter(time => now - time < recentWindow);
+            
+            const recentCount = appState.recentDrinks.length;
+            
+            // 如果2分钟内喝水次数<=3次，恢复正常
+            if (recentCount <= 3) {
+                appState.cooldownMultiplier = 1.0;
+                cooldownTip.style.display = 'none';
+            }
+        }, 10000); // 每10秒检查一次
+        
+        function getTimeBasedQuestions() {
+            const hour = new Date().getHours();
+            
+            if (hour >= 6 && hour < 11) return catQuestions.morning;
+            if (hour >= 11 && hour < 14) return catQuestions.noon;
+            if (hour >= 14 && hour < 18) return catQuestions.afternoon;
+            if (hour >= 18 && hour < 22) return catQuestions.evening;
+            return catQuestions.night;
+        }
+        
+        function drinkWater() {
+            const now = Date.now();
+            appState.recentDrinks.push(now);
+            appState.drinkCount++;
+            appState.todaySips++;
+            appState.lastDrinkTime = now;
+            
+            // 计算冷却倍数
+            const multiplier = calculateCooldownMultiplier();
+            
+            // 更新进度显示
+            updateProgress();
+            
+            // 随机奖励
+            const rewards = [
+                { type: '猫粮', icon: '🍖', chance: 0.6, effect: 'hunger', value: 15, anim: 'eating' },
+                { type: '零食', icon: '🐟', chance: 0.25, effect: 'happy', value: 20, anim: 'eating' },
+                { type: '玩具', icon: '🎾', chance: 0.15, effect: 'play', value: 0, anim: 'playing' }
+            ];
+            
+            const random = Math.random();
+            let cumulative = 0;
+            let reward = rewards[0];
+            
+            for (const r of rewards) {
+                cumulative += r.chance;
+                if (random <= cumulative) {
+                    reward = r;
+                    break;
+                }
+            }
+            
+            // 显示掉落的食物/玩具
+            showRewardDrop(reward.icon);
+            
+            // 应用奖励（受冷却倍数影响）
+            const actualValue = Math.floor(reward.value * multiplier);
+            
+            // 猫咪动画
+            cat.classList.add(reward.anim);
+            
+            if (reward.effect === 'hunger') {
+                appState.hunger = Math.min(100, appState.hunger + actualValue);
+                cat.classList.remove('hungry', 'sad');
+            } else if (reward.effect === 'happy') {
+                appState.happy = Math.min(100, appState.happy + actualValue);
+            }
+            
+            appState.health = Math.min(100, appState.health + Math.floor(5 * multiplier));
+            
+            updateStatusBars();
+            
+            // 随机触发猫咪提问（30%概率，且冷却倍数>0.5才会问）
+            if (Math.random() < 0.3 && multiplier > 0.5) {
+                setTimeout(() => {
+                    showCatQuestion();
+                }, 1500);
+            }
+            
+            setTimeout(() => {
+                cat.classList.remove(reward.anim);
+            }, reward.anim === 'eating' ? 2400 : 1000);
+        }
+        
+        function showRewardDrop(icon) {
+            const rewardItem = document.createElement('div');
+            rewardItem.className = 'reward-item';
+            rewardItem.textContent = icon;
+            rewardItem.style.left = '50%';
+            catContainer.appendChild(rewardItem);
+            
+            setTimeout(() => {
+                rewardItem.remove();
+            }, 1500);
+        }
+        
+        function updateProgress() {
+            const targetSips = appState.targetSips;
+            const targetMl = targetSips * appState.mlPerSip;
+            const todayMl = appState.todaySips * appState.mlPerSip;
+            
+            todaySipsCount.textContent = appState.todaySips;
+            targetSipsCount.textContent = targetSips;
+            todayMlCount.textContent = todayMl;
+            targetMlCount.textContent = targetMl;
+            
+            // 如果完成目标
+            if (appState.todaySips >= targetSips && !appState.goalCompleted) {
+                appState.goalCompleted = true;
+                drinkBtn.innerHTML = '✨ 今日目标已完成！';
+                drinkBtn.style.background = 'linear-gradient(135deg, #6BCB77 0%, #4D9559 100%)';
+                
+                // 显示完成庆祝
+                showGoalComplete();
+            }
+        }
+        
+        function showGoalComplete() {
+            const popup = document.createElement('div');
+            popup.className = 'reward-popup';
+            popup.innerHTML = `
+                <div style="font-size: 60px; margin-bottom: 15px;">🎉</div>
+                <div style="font-size: 20px; color: var(--success); font-weight: bold; margin-bottom: 10px;">
+                    今日目标达成！
+                </div>
+                <div style="font-size: 15px; color: var(--text);">
+                    ${appState.catName}会一直陪着你哦~
+                </div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // 猫咪开心动画
+            cat.classList.add('happy');
+            setTimeout(() => cat.classList.remove('happy'), 2000);
+            
+            setTimeout(() => {
+                popup.classList.add('hide');
+                setTimeout(() => popup.remove(), 300);
+            }, 3000);
+        }
+        
+        function showCatQuestion() {
+            // 根据时间段选择问题库
+            const timeBasedQuestions = getTimeBasedQuestions();
+            const allQuestions = [...timeBasedQuestions, ...catQuestions.general];
+            
+            // 随机选择一个问题
+            const question = allQuestions[Math.floor(Math.random() * allQuestions.length)];
+            
+            const popup = document.createElement('div');
+            popup.className = 'reward-popup cat-question-popup';
+            popup.style.maxWidth = '320px';
+            
+            popup.innerHTML = `
+                <div style="font-size: 40px; margin-bottom: 15px;">🐱</div>
+                <div style="font-size: 16px; color: var(--text); margin-bottom: 20px; line-height: 1.5;">
+                    ${question.q}
+                </div>
+                <div class="question-answers">
+                    ${question.a.map((ans, idx) => `
+                        <button class="answer-btn" data-index="${idx}" data-answer="${ans}">
+                            ${ans}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // 答案按钮点击事件
+            const answerBtns = popup.querySelectorAll('.answer-btn');
+            answerBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const answer = btn.dataset.answer;
+                    
+                    // 记住对话历史
+                    conversationHistory.push({
+                        question: question.q,
+                        answer: answer,
+                        timestamp: Date.now()
+                    });
+                    
+                    // 猫咪的各种可爱反应
+                    const responses = [
+                        '喵~ 我懂了！',
+                        '原来如此喵~',
+                        '好的好的！',
+                        '嗯嗯，记住了！',
+                        '谢谢告诉我喵~',
+                        '嘿嘿，知道啦~',
+                        '这样呀！',
+                        '了解了解~'
+                    ];
+                    
+                    // 根据答案内容给出不同的反应
+                    let response;
+                    if (answer.includes('好') || answer.includes('是') || answer.includes('睡得')) {
+                        response = ['太好啦喵~', '真棒！', '我也很开心~'][Math.floor(Math.random() * 3)];
+                    } else if (answer.includes('累') || answer.includes('困') || answer.includes('不')) {
+                        response = ['要好好休息哦~', '那喝点水会舒服些', '陪你~'][Math.floor(Math.random() * 3)];
+                    } else {
+                        response = responses[Math.floor(Math.random() * responses.length)];
+                    }
+                    
+                    popup.innerHTML = `
+                        <div style="font-size: 50px; margin-bottom: 15px;">😸</div>
+                        <div style="font-size: 18px; color: var(--primary);">${response}</div>
+                    `;
+                    
+                    // 增加一点快乐值
+                    appState.happy = Math.min(100, appState.happy + 3);
+                    updateStatusBars();
+                    
+                    setTimeout(() => {
+                        popup.classList.add('hide');
+                        setTimeout(() => popup.remove(), 300);
+                    }, 1500);
+                });
+            });
+            
+            // 10秒后自动关闭
+            setTimeout(() => {
+                if (document.body.contains(popup)) {
+                    popup.classList.add('hide');
+                    setTimeout(() => popup.remove(), 300);
+                }
+            }, 10000);
+        }
+        
+        function updateStatusBars() {
+            hungerBar.style.width = appState.hunger + '%';
+            happyBar.style.width = appState.happy + '%';
+            healthBar.style.width = appState.health + '%';
+            
+            hungerValue.textContent = Math.floor(appState.hunger);
+            happyValue.textContent = Math.floor(appState.happy);
+            healthValue.textContent = Math.floor(appState.health);
+            
+            // 更新猫咪状态
+            if (appState.hunger < 30) {
+                cat.classList.add('hungry');
+            } else {
+                cat.classList.remove('hungry');
+            }
+            
+            if (appState.happy < 40) {
+                cat.classList.add('sad');
+            } else {
+                cat.classList.remove('sad');
+            }
+        }
+        
+        // 时间流逝效果 - 每分钟检查一次
+        setInterval(() => {
+            const now = Date.now();
+            
+            // 检查睡眠状态
+            checkSleepStatus();
+            
+            // 如果在睡觉或已完成目标，不进行数值衰减
+            if (appState.isSleeping || appState.goalCompleted) {
+                return;
+            }
+            
+            // 计算距离上次衰减的时间
+            const timeSinceLastDecay = now - appState.lastDecayTime;
+            const minutesPassed = timeSinceLastDecay / (1000 * 60);
+            
+            // 每10分钟衰减一次
+            if (minutesPassed >= 10) {
+                appState.lastDecayTime = now;
+                
+                // 根据距离上次喝水的时间决定衰减速度
+                const timeSinceLastDrink = now - appState.lastDrinkTime;
+                const hoursSinceDrink = timeSinceLastDrink / (1000 * 60 * 60);
+                
+                let decayMultiplier = 1.0;
+                if (hoursSinceDrink > 2) {
+                    decayMultiplier = 2.0; // 超过2小时不喝水，衰减加倍
+                } else if (hoursSinceDrink > 1) {
+                    decayMultiplier = 1.5; // 超过1小时，衰减1.5倍
+                }
+                
+                // 数值衰减
+                appState.hunger = Math.max(0, appState.hunger - 3 * decayMultiplier);
+                appState.happy = Math.max(0, appState.happy - 2 * decayMultiplier);
+                appState.health = Math.max(0, appState.health - 1.5 * decayMultiplier);
+                
+                updateStatusBars();
+                
+                // 如果很久没喝水，猫咪会到边缘提醒
+                if (hoursSinceDrink > 1.5 && appState.health < 60 && !appState.isSleeping) {
+                    showThirstyReminder();
+                }
+            }
+        }, 60000); // 每分钟检查一次
+        
+        function showThirstyReminder() {
+            // 猫咪移到边缘
+            cat.style.transition = 'left 1s ease';
+            cat.style.left = '20%';
+            
+            // 显示提示
+            const tip = document.createElement('div');
+            tip.className = 'cooldown-tip-center';
+            tip.textContent = '喵~ 好渴呀...';
+            tip.style.background = 'rgba(255, 107, 157, 0.95)';
+            catContainer.appendChild(tip);
+            
+            setTimeout(() => {
+                cat.style.left = '50%';
+                tip.remove();
+            }, 3000);
+        }
+        
+        // 设置页面功能
+        const catNameInput = document.getElementById('catName');
+        const userHeight = document.getElementById('userHeight');
+        const userWeight = document.getElementById('userWeight');
+        const targetWater = document.getElementById('targetWater');
+        const sipsSizeSelect = document.getElementById('sipsSize');
+        
+        function calculateTargetWater() {
+            const weight = parseInt(userWeight.value) || 60;
+            const targetMl = weight * 30; // 30ml/kg
+            targetWater.textContent = targetMl;
+            
+            // 根据选择的每次喝水量计算目标次数
+            const mlPerSip = parseInt(sipsSizeSelect.value);
+            appState.mlPerSip = mlPerSip;
+            appState.targetSips = Math.ceil(targetMl / mlPerSip);
+            appState.settings.sipsSize = mlPerSip;
+            
+            // 更新显示
+            updateProgress();
+            
+            return targetMl;
+        }
+        
+        userHeight.addEventListener('input', () => {
+            appState.settings.height = parseInt(userHeight.value);
+            calculateTargetWater();
+        });
+        
+        userWeight.addEventListener('input', () => {
+            appState.settings.weight = parseInt(userWeight.value);
+            calculateTargetWater();
+        });
+        
+        sipsSizeSelect.addEventListener('change', () => {
+            calculateTargetWater();
+        });
+        
+        catNameInput.addEventListener('input', () => {
+            appState.catName = catNameInput.value;
+        });
+        
+        // 开关按钮
+        const toggles = document.querySelectorAll('.toggle-switch');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+                
+                const settingName = toggle.id.replace('Toggle', '');
+                
+                // 通知开关特殊处理
+                if (settingName === 'notification') {
+                    const isActive = toggle.classList.contains('active');
+                    appState.settings.notifications = isActive;
+                    
+                    if (isActive) {
+                        // 请求通知权限并开启提醒
+                        requestNotificationPermission().then(() => {
+                            if (notificationPermission === 'granted') {
+                                startReminder(60); // 60分钟提醒一次
+                                sendNotification('🎉 提醒已开启', '我会每小时提醒你喝水哦~');
+                            } else {
+                                // 权限被拒绝，关闭开关
+                                toggle.classList.remove('active');
+                                appState.settings.notifications = false;
+                                alert('需要开启通知权限才能使用提醒功能哦~\n\n请在手机设置中允许通知');
+                            }
+                        });
+                    } else {
+                        // 关闭提醒
+                        stopReminder();
+                    }
+                } else if (appState.settings.hasOwnProperty(settingName)) {
+                    appState.settings[settingName] = toggle.classList.contains('active');
+                }
+            });
+        });
+        
+        // 添加记录按钮
+        const addRecordBtn = document.querySelector('.add-record-btn');
+        addRecordBtn.addEventListener('click', () => {
+            openEditModal();
+        });
+        
+        // 时间轴编辑按钮
+        function attachEditListeners() {
+            const editBtns = document.querySelectorAll('.timeline-edit');
+            editBtns.forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const recordId = parseInt(btn.dataset.id);
+                    openEditModal(recordId);
+                };
+            });
+        }
+        
+        // 编辑记录功能
+        const editModal = document.getElementById('editModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const editForm = document.getElementById('editForm');
+        const editTime = document.getElementById('editTime');
+        const editType = document.getElementById('editType');
+        const editContent = document.getElementById('editContent');
+        const editIcon = document.getElementById('editIcon');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        
+        function openEditModal(recordId = null) {
+            if (recordId) {
+                // 编辑现有记录
+                const record = appState.waterRecords.find(r => r.id === recordId);
+                if (record) {
+                    modalTitle.textContent = '编辑记录';
+                    editTime.value = record.time;
+                    editType.value = record.type;
+                    editContent.value = record.content;
+                    editIcon.value = record.icon;
+                    deleteBtn.style.display = 'block';
+                    appState.currentEditId = recordId;
+                }
+            } else {
+                // 添加新记录
+                modalTitle.textContent = '添加记录';
+                editForm.reset();
+                const now = new Date();
+                editTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                deleteBtn.style.display = 'none';
+                appState.currentEditId = null;
+            }
+            editModal.classList.add('show');
+        }
+        
+        function closeEditModal() {
+            editModal.classList.remove('show');
+            editForm.reset();
+            appState.currentEditId = null;
+        }
+        
+        cancelBtn.addEventListener('click', closeEditModal);
+        
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+        
+        editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const record = {
+                time: editTime.value,
+                type: editType.value,
+                content: editContent.value,
+                icon: editIcon.value
+            };
+            
+            if (appState.currentEditId) {
+                // 更新现有记录
+                const index = appState.waterRecords.findIndex(r => r.id === appState.currentEditId);
+                if (index !== -1) {
+                    appState.waterRecords[index] = {
+                        ...appState.waterRecords[index],
+                        ...record
+                    };
+                }
+            } else {
+                // 添加新记录
+                const newId = Math.max(...appState.waterRecords.map(r => r.id), 0) + 1;
+                appState.waterRecords.push({
+                    id: newId,
+                    ...record
+                });
+            }
+            
+            // 按时间排序
+            appState.waterRecords.sort((a, b) => a.time.localeCompare(b.time));
+            
+            renderWaterRecords();
+            closeEditModal();
+        });
+        
+        deleteBtn.addEventListener('click', () => {
+            if (confirm('确定要删除这条记录吗？')) {
+                appState.waterRecords = appState.waterRecords.filter(r => r.id !== appState.currentEditId);
+                renderWaterRecords();
+                closeEditModal();
+            }
+        });
+        
+        // 渲染饮水记录
+        function renderWaterRecords() {
+            const timeline = document.querySelector('.timeline');
+            timeline.innerHTML = '';
+            
+            appState.waterRecords.forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `
+                    <div class="timeline-time">${record.time}</div>
+                    <div class="timeline-content">
+                        <div class="timeline-icon">${record.icon}</div>
+                        <div class="timeline-text">
+                            <div class="timeline-type">${record.type}</div>
+                            <div class="timeline-note">${record.content}</div>
+                        </div>
+                        <button class="timeline-edit" data-id="${record.id}">✏️</button>
+                    </div>
+                `;
+                timeline.appendChild(item);
+            });
+            
+            attachEditListeners();
+        }
+        
+        // 初始化渲染
+        renderWaterRecords();
+        
+        // 初始化
+        calculateTargetWater();
+        updateStatusBars();
+        updateProgress();
+        checkSleepStatus(); // 检查当前是否应该睡觉
+        
+        // 如果通知开关是打开的，自动请求权限
+        if (appState.settings.notifications) {
+            requestNotificationPermission().then(() => {
+                if (notificationPermission === 'granted') {
+                    startReminder(60);
+                }
+            });
+        }
+        
+        // 欢迎动画（如果不在睡觉）
+        setTimeout(() => {
+            if (!appState.isSleeping) {
+                cat.classList.add('happy');
+                setTimeout(() => {
+                    cat.classList.remove('happy');
+                }, 1000);
+            }
+        }, 500);
+        
+        console.log('🐱 喵喵喝水 App 原型已启动！');
+        console.log('');
+        console.log('🔔 通知功能：');
+        console.log('- 在设置页面打开"开启提醒"');
+        console.log('- 允许浏览器发送通知');
+        console.log('- 每60分钟会收到喝水提醒');
+        console.log('- Safari添加到主屏幕后也能收到通知');
+        console.log('');
+        console.log('💧 喝水量设置（可在设置页调整）：');
+        console.log('- 小口（75ml/次）：约3口水');
+        console.log('- 正常（100ml/次）：约4口水 ✓');
+        console.log('- 大口（150ml/次）：约6口水');
+        console.log('');
+        console.log('🛡️ 防作弊机制：');
+        console.log('- 前3次：正常喝水，100%奖励');
+        console.log('- 第4次起：逐渐降低奖励');
+        console.log('- 等待2分钟后自动恢复');
+        console.log('');
+        console.log('🎮 试试看：');
+        console.log('- 去设置页打开"开启提醒"测试通知');
+        console.log('- 连续点击4次看提示变化');
+        console.log('- 长按猫咪看它翻肚皮');
+    </script>
+</body>
+</html>
